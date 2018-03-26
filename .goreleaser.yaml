@@ -1,5 +1,5 @@
 builds:
-  - binary: drum-roll
+  - binary: helm-release
     goos:
       - windows
       - darwin
