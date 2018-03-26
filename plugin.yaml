@@ -6,4 +6,4 @@ description: |-
   It will also optionally update the image tag in the values.yaml file.
 ignoreFlags: false
 useTunnel: false
-command: "$HELM_PLUGIN_DIR/run.sh"
+command: "$HELM_PLUGIN_DIR/helm-release"
