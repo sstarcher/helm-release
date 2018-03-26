@@ -17,10 +17,11 @@ var tagPath string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "helm-release",
+	Use:   "helm-release [CHART_PATH]",
 	Short: "Determines the charts next release number",
 	Long: `This plugin will use environment variables and git history to divine the next chart version.
 	It will also optionally update the image tag in the values.yaml file.`,
+	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dir := "."
 		if len(args) > 0 {

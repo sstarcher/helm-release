@@ -19,6 +19,8 @@ You can install a specific release version:
 
 ## Usage
 
+* helm release CHART - Would determine the next tag for the chart and update the Chart.yaml
+* helm release CHART -t 12345 - Would update Chart.yaml and modify values.yaml images.tag to equal 1235
 
 ## Release Logic
 
