@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var noTags = "/Users/sstarcher/github/helm-release/tests/notags"
+var noTags = "../tests/notags"
 
 func TestFindCharts(t *testing.T) {
 	assert := assert.New(t)

@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var dir = "/Users/sstarcher/github/helm-release/tests/tags"
-var noTagsDir = "/Users/sstarcher/github/helm-release/tests/notags"
+var dir = "../tests/tags"
+var noTagsDir = "../tests/notags"
 
 func TestValidGitRepo(t *testing.T) {
 	assert := assert.New(t)
