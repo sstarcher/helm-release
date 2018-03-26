@@ -9,10 +9,6 @@ This allows you to run a single command and package the next version of your cha
 
 ## Install
 
-The installation itself is simple as:
-
-    $ helm plugin install https://github.com/sstarcher/helm-release
-
 You can install a specific release version: 
 
     $ helm plugin install https://github.com/sstarcher/helm-release --version 0.1.1
