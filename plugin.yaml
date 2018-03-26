@@ -7,3 +7,5 @@ description: |-
 ignoreFlags: false
 useTunnel: false
 command: "$HELM_PLUGIN_DIR/helm-release"
+hooks:
+  install: "$HELM_PLUGIN_DIR/install-binary.sh"
