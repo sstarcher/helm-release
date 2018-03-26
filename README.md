@@ -29,9 +29,9 @@ To describe the release naming process we will use the following nomenclature.
 * TAG - is used when COMMITS has a value of 0 as in the current commit has been specifically tagged
 * SHA - uses a short git sha using `git rev-parse --short HEAD` with the `g` prefix removed
 * BRANCH - finds the current branch name using `git rev-parse --abbrev-ref HEAD`
- * overridden using BRANCH_NAME environment variable
- * always converted to lowercase
- * strips any characters that don't match - https://semver.org/#spec-item-9
+  * overridden using BRANCH_NAME environment variable
+  * always converted to lowercase
+  * strips any characters that don't match - https://semver.org/#spec-item-9
 
 The default version for a branch is `NEXT_TAG-BRANCH-COMMITS+SHA`
 
