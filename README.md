@@ -15,7 +15,7 @@ The installation itself is simple as:
 
 You can install a specific release version: 
 
-    $ helm plugin install https://github.com/sstarcher/helm-release --version 0.1.0
+    $ helm plugin install https://github.com/sstarcher/helm-release --version 0.1.1
 
 ## Usage
 
