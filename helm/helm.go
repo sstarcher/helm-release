@@ -27,11 +27,6 @@ type Chart struct {
 	TagPath string
 }
 
-// ChartYaml defines the minimal structure of a Chart.yaml that we need to process
-type ChartYaml struct {
-	Version string
-}
-
 // New finds the helm chart in the directory and returns a Chart object
 func New(dir string) (*Chart, error) {
 	charts := findCharts(dir)
@@ -134,7 +129,7 @@ func (c *Chart) Version() (*string, error) {
 
 // UpdateChartVersion updates the version of the helm chart
 func (c *Chart) UpdateChartVersion(chartVersion string) error {
-	var config ChartYaml
+	var config map[interface{}]interface{}
 	source, err := ioutil.ReadFile(c.path + "/Chart.yaml")
 	if err != nil {
 		return err
@@ -144,7 +139,7 @@ func (c *Chart) UpdateChartVersion(chartVersion string) error {
 		return err
 	}
 
-	config.Version = chartVersion
+	config["version"] = chartVersion
 
 	out, err := yaml.Marshal(&config)
 	if err != nil {
