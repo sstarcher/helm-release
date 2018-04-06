@@ -166,21 +166,30 @@ func (c *Chart) UpdateImageVersion(dockerVersion string) error {
 	}
 
 	obj := values
+	if obj == nil {
+		return errors.New("the values.yaml file is empty")
+	}
+
 	pathArray := strings.Split(c.TagPath, ".")
 	for i := 0; i < len(pathArray); i++ {
 		k := pathArray[i]
-		objMap := obj.(map[interface{}]interface{})
-		if i == len(pathArray)-1 {
-			if _, ok := objMap[k]; !ok {
-				return fmt.Errorf("final key in path does not exist %s for path %s", k, c.TagPath)
+		switch objMap := obj.(type) {
+		case map[interface{}]interface{}:
+			if i == len(pathArray)-1 {
+				if _, ok := objMap[k]; !ok {
+					return fmt.Errorf("final key in path does not exist %s for path %s", k, c.TagPath)
+				}
+				objMap[k] = dockerVersion
+				break
 			}
-			objMap[k] = dockerVersion
-			break
+			obj = objMap[k]
+			if obj == nil {
+				return fmt.Errorf("unable to process %s", c.TagPath)
+			}
+		default:
+			return fmt.Errorf("while processing key[%s] for path[%s] expected a map, but got %T", k, c.TagPath, objMap)
 		}
-		obj = objMap[k]
-		if obj == nil {
-			return fmt.Errorf("unable to process %s", c.TagPath)
-		}
+
 	}
 
 	out, err := yaml.Marshal(&values)
