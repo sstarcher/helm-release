@@ -92,7 +92,7 @@ func (g *git) Commits() (commits int, err error) {
 
 	s, err := g.run("describe", "--tags")
 	if err != nil {
-		s, err = g.run("rev-list", "--all", "--count")
+		s, err = g.run("rev-list", "--count", "HEAD")
 		if err != nil {
 			return
 		}
