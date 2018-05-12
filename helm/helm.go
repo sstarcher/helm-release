@@ -25,6 +25,7 @@ type Chart struct {
 	Name    string
 	path    string
 	TagPath string
+	git     git.Gitter
 }
 
 // New finds the helm chart in the directory and returns a Chart object
@@ -42,6 +43,12 @@ func New(dir string) (*Chart, error) {
 
 	chart := charts[0]
 	chart.TagPath = "image.tag"
+
+	var err error
+	chart.git, err = git.New(chart.path)
+	if err != nil {
+		return nil, err
+	}
 	return &chart, nil
 }
 
@@ -61,37 +68,42 @@ func findCharts(dir string) []Chart {
 	return charts
 }
 
-// Version determines the correct version for the chart
-func (c *Chart) Version() (*string, error) {
-	git, err := git.New(c.path)
-	if err != nil {
-		return nil, err
-	}
-
-	tag, err := git.Tag()
+func (c *Chart) gitSemVersion() (*semver.Version, error) {
+	tag, err := c.git.Tag()
 	if err != nil {
 		tag = "0.1.0"
 		log.Infof("unable to find any git tags using %s", tag)
 	}
 
-	commits, err := git.Commits()
+	tag = strings.TrimPrefix(tag, "v")
+	tag = strings.TrimPrefix(tag, "r")
+	ver, err := semver.NewVersion(tag)
+	if err != nil {
+		return nil, fmt.Errorf("%s %s", tag, err)
+	}
+	return ver, nil
+}
+
+// Version determines the correct version for the chart
+func (c *Chart) Version() (*string, error) {
+	commits, err := c.git.Commits()
 	if err != nil {
 		return nil, err
 	}
 
-	sha, err := git.Sha()
+	sha, err := c.git.Sha()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch git sha %s", err)
 	}
 
-	branch, err := git.Branch()
+	branch, err := c.git.Branch()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch git branch %s", err)
 	}
 
-	ver, err := semver.NewVersion(tag)
+	ver, err := c.gitSemVersion()
 	if err != nil {
-		return nil, fmt.Errorf("%s %s", tag, err)
+		return nil, err
 	}
 
 	version := *ver
