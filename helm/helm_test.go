@@ -2,6 +2,7 @@ package helm
 
 import (
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -68,15 +69,16 @@ var versionTests = []struct {
 	tag      string
 	sha      string
 	commits  string
+	tagged   bool
 	expected string
 }{
-	{"master", "1.0.0", "0000001", "1", "1.0.1-1+0000001"},
-	{"master", "1.0.0", "0000002", "0", "1.0.0+0000002"},
-	{"master", "", "0000003", "1", "0.1.1-1+0000003"},
-	{"otherBranch", "1.0.0", "0000010", "1", "1.0.1-otherbranch.1+0000010"},
-	{"otherBranch", "1.0.0", "0000011", "0", "1.0.1-otherbranch+0000011"},
-	{"weird/branch$$other", "0.1.2", "0000020", "0", "0.1.3-weird.branch.other+0000020"},
-	{"noversion", "", "0000030", "0", "0.1.1-noversion+0000030"},
+	{"master", "1.0.0", "0000001", "1", false, "1.0.1-1+0000001"},
+	{"master", "1.0.0", "0000002", "0", true, "1.0.0+0000002"},
+	{"master", "", "0000003", "1", false, "0.1.1-1+0000003"},
+	{"otherBranch", "1.0.0", "0000010", "1", false, "1.0.1-otherbranch.1+0000010"},
+	{"otherBranch", "1.0.0", "0000011", "0", true, "1.0.0+0000011"},
+	{"weird/branch$$other", "0.1.2", "0000020", "1", false, "0.1.3-weird.branch.other.1+0000020"},
+	{"noversion", "", "0000030", "0", true, "0.1.0+0000030"},
 }
 
 func TestVersions(t *testing.T) {
@@ -91,6 +93,7 @@ func TestVersions(t *testing.T) {
 		os.Setenv("LAST_TAG", tt.tag)
 		os.Setenv("SHA", tt.sha)
 		os.Setenv("COMMITS", tt.commits)
+		os.Setenv("IS_TAGGED", strconv.FormatBool(tt.tagged))
 
 		actual, err := chart.Version()
 		assert.Nil(err)
@@ -104,5 +107,6 @@ func TestVersions(t *testing.T) {
 		os.Unsetenv("LAST_TAG")
 		os.Unsetenv("SHA")
 		os.Unsetenv("COMMITS")
+		os.Unsetenv("IS_TAGGED")
 	}
 }

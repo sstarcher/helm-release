@@ -77,6 +77,15 @@ func (g *git) Tag() (tag string, err error) {
 }
 
 func (g *git) IsTagged() bool {
+	tag := os.Getenv("IS_TAGGED")
+	if tag != "" {
+		b, err := strconv.ParseBool(tag)
+		if err != nil {
+			return false
+		}
+		return b
+	}
+
 	_, err := g.run("describe", "--exact-match")
 	return err == nil
 }
