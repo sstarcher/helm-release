@@ -107,13 +107,13 @@ func (c *Chart) Version() (*string, error) {
 	}
 
 	version := *ver
-	if commits != 0 || branch != "master" {
-		version = version.IncPatch()
-	}
-
 	prerel := ""
-	if branch != "master" {
-		prerel = branch
+	tagged := c.git.IsTagged()
+	if !tagged {
+		version = version.IncPatch()
+		if branch != "master" {
+			prerel = branch
+		}
 	}
 
 	if commits != 0 {

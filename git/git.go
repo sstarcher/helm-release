@@ -18,6 +18,7 @@ type Gitter interface {
 	Commits() (commits int, err error)
 	Sha() (sha string, err error)
 	Branch() (string, error)
+	IsTagged() bool
 }
 
 type git struct {
@@ -73,6 +74,11 @@ func (g *git) Tag() (tag string, err error) {
 		return
 	}
 	return
+}
+
+func (g *git) IsTagged() bool {
+	_, err := g.run("describe", "--exact-match")
+	return err == nil
 }
 
 func (g *git) Commits() (commits int, err error) {
