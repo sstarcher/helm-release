@@ -112,7 +112,7 @@ func (c *Chart) Version() (*string, error) {
 	if !tagged {
 		version = version.IncPatch()
 		if branch != "master" {
-			prerel = branch
+			prerel = "0." + branch
 		}
 	}
 

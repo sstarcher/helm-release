@@ -9,7 +9,7 @@ This allows you to run a single command and package the next version of your cha
 
 ## Install
 
-You can install a specific release version: 
+You can install a specific release version:
 
     $ helm plugin install https://github.com/sstarcher/helm-release --version 0.1.2
 
@@ -21,7 +21,7 @@ You can install a specific release version:
 ## Release Logic
 
 To describe the release naming process we will use the following nomenclature.
-* LAST_TAG - finds the previous tag from the git history using `git describe --tags` 
+* LAST_TAG - finds the previous tag from the git history using `git describe --tags`
 * NEXT_TAG - uses LAST_TAG and increments the patch by 1
 * COMMITS - finds the total number of commits using `git describe --tags`
 * TAG - is used when COMMITS has a value of 0 as in the current commit has been specifically tagged
@@ -30,8 +30,9 @@ To describe the release naming process we will use the following nomenclature.
   * overridden using BRANCH_NAME environment variable
   * always converted to lowercase
   * strips any characters that don't match - https://semver.org/#spec-item-9
+  * We prefix BRANCH with `0.` to ensure it's the lowest version
 
-The default version for a branch is `NEXT_TAG-BRANCH-COMMITS+SHA`
+The default version for a branch is `NEXT_TAG-0.BRANCH-COMMITS+SHA`
 
 ### Tags
 
@@ -44,7 +45,7 @@ The master branch is treated differently from the default and will be `NEXT_TAG-
 
 ### Integrated Support for Jenkins and PR branches
 
-Jenkins uses the environment variable BRANCH_NAME with the value of the PR example `PR-97`.  This will result in a release version of `NEXT_TAG-pr-97-COMMITS+SHA`
+Jenkins uses the environment variable BRANCH_NAME with the value of the PR example `PR-97`.  This will result in a release version of `NEXT_TAG-0.pr-97-COMMITS+SHA`
 
 ## Uninstall
 
