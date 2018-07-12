@@ -69,10 +69,6 @@ func (g *git) Tag() (tag string, err error) {
 		tag = strings.Join(items[0:len(items)-2], "-")
 	}
 
-	if err != nil {
-		err = fmt.Errorf("failed to convert to integer [%s]", items[1])
-		return
-	}
 	return
 }
 
@@ -96,7 +92,7 @@ func (g *git) Commits() (commits int, err error) {
 	if commitStr != "" {
 		commits, err = strconv.Atoi(commitStr)
 		if err != nil {
-			err = fmt.Errorf("failed to convert to integer [%s]", commitStr)
+			err = fmt.Errorf("expected COMMITS environment variable to be an integer instead of [%s]", commitStr)
 			return
 		}
 	}
@@ -124,8 +120,7 @@ func (g *git) Commits() (commits int, err error) {
 
 	commits, err = strconv.Atoi(items[len(items)-2])
 	if err != nil {
-		err = fmt.Errorf("failed to convert to integer [%s]", items[1])
-		return
+		return 0, nil // When at the tag we won't have the right format
 	}
 
 	return
