@@ -71,7 +71,7 @@ func findCharts(dir string) []Chart {
 func (c *Chart) gitSemVersion() (*semver.Version, error) {
 	tag, err := c.git.Tag()
 	if err != nil {
-		tag = "0.1.0"
+		tag = "0.0.1"
 		log.Infof("unable to find any git tags using %s", tag)
 	}
 
@@ -110,6 +110,9 @@ func (c *Chart) Version() (*string, error) {
 	prerel := ""
 	tagged := c.git.IsTagged()
 	if !tagged {
+		if branch == "head" && commits == 0 {
+			return nil, errors.New("this is likely an light-weight git tag. please use a annotated tag for helm release to function properly")
+		}
 		version = version.IncPatch()
 		if branch != "master" {
 			prerel = "0." + branch
