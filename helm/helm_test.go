@@ -74,11 +74,11 @@ var versionTests = []struct {
 }{
 	{"master", "1.0.0", "0000001", "1", false, "1.0.1-1+0000001"},
 	{"master", "1.0.0", "0000002", "0", true, "1.0.0+0000002"},
-	{"master", "", "0000003", "1", false, "0.1.1-1+0000003"},
+	{"master", "", "0000003", "1", false, "0.0.2-1+0000003"},
 	{"otherBranch", "1.0.0", "0000010", "1", false, "1.0.1-0.otherbranch.1+0000010"},
 	{"otherBranch", "1.0.0", "0000011", "0", true, "1.0.0+0000011"},
 	{"weird/branch$$other", "0.1.2", "0000020", "1", false, "0.1.3-0.weird.branch.other.1+0000020"},
-	{"noversion", "", "0000030", "0", true, "0.1.0+0000030"},
+	{"noversion", "", "0000030", "0", true, "0.0.1+0000030"},
 }
 
 func TestVersions(t *testing.T) {
