@@ -38,6 +38,8 @@ The default version for a branch is `NEXT_TAG-0.BRANCH-COMMITS+SHA`
 
 When COMMITS is equal to 0 we assume the intent is to do a release of the current commit and the version will be the tag itself `TAG+SHA`
 
+*NOTE* Tags should be annotated tags and not lightweight tags.  Tags created in the Github UI will be lightweight tags by default.
+
 
 ### Master branch
 
