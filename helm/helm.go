@@ -119,11 +119,13 @@ func (c *Chart) Version() (*string, error) {
 		}
 	}
 
-	if commits != 0 {
-		if prerel != "" {
-			prerel += "."
+	if branch == "master" {
+		if commits != 0 {
+			if prerel != "" {
+				prerel += "."
+			}
+			prerel += strconv.Itoa(commits)
 		}
-		prerel += strconv.Itoa(commits)
 	}
 
 	if prerel != "" {
