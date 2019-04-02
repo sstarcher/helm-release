@@ -14,6 +14,7 @@ import (
 var cfgFile string
 var tag string
 var tagPath string
+var printComputedVersion bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -37,6 +38,12 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		if printComputedVersion {
+			_, err = os.Stdout.WriteString(*version)
+			return err
+		}
+
 		log.Infof("updating the Chart.yaml to version %s", *version)
 
 		chart.UpdateChartVersion(*version)
@@ -73,6 +80,7 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().StringVarP(&tag, "tag", "t", "", "Sets the docker image tag in values.yaml")
 	rootCmd.Flags().StringVar(&tagPath, "path", helm.DefaultTagPath, "Sets the path to the image tag to modify in values.yaml")
+	rootCmd.Flags().BoolVar(&printComputedVersion, "print-computed-version", false, "Print the computed version string to stdout")
 }
 
 // initConfig reads in config file and ENV variables if set.
