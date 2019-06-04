@@ -1,7 +1,7 @@
 [submodule "tests/tags"]
 	path = tests/tags
-	url = git@github.com:sstarcher/helm-release-tags.git
+	url = https://github.com/sstarcher/helm-release-tags.git
 [submodule "tests/notags"]
 	path = tests/notags
-	url = git@github.com:sstarcher/helm-release-notags.git
+	url = https://github.com/sstarcher/helm-release-notags.git
 	branch = master
