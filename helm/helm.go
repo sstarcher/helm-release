@@ -7,14 +7,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
-
-	"github.com/Masterminds/semver"
-	log "github.com/sirupsen/logrus"
-	"github.com/sstarcher/helm-release/git"
 )
 
 // DefaultTagPath is the default path to the image tag in a helm values.yaml
@@ -25,7 +20,6 @@ type Chart struct {
 	Name    string
 	path    string
 	TagPath string
-	git     git.Gitter
 }
 
 // New finds the helm chart in the directory and returns a Chart object
@@ -44,11 +38,6 @@ func New(dir string) (*Chart, error) {
 	chart := charts[0]
 	chart.TagPath = "image.tag"
 
-	var err error
-	chart.git, err = git.New(chart.path)
-	if err != nil {
-		return nil, err
-	}
 	return &chart, nil
 }
 
@@ -66,82 +55,6 @@ func findCharts(dir string) []Chart {
 		return nil
 	})
 	return charts
-}
-
-func (c *Chart) gitSemVersion() (*semver.Version, error) {
-	tag, err := c.git.Tag()
-	if err != nil {
-		tag = "0.0.1"
-		log.Infof("unable to find any git tags using %s", tag)
-	}
-
-	tag = strings.TrimPrefix(tag, "v")
-	tag = strings.TrimPrefix(tag, "r")
-	ver, err := semver.NewVersion(tag)
-	if err != nil {
-		return nil, fmt.Errorf("%s %s", tag, err)
-	}
-	return ver, nil
-}
-
-// Version determines the correct version for the chart
-func (c *Chart) Version() (*string, error) {
-	commits, err := c.git.Commits()
-	if err != nil {
-		return nil, err
-	}
-
-	sha, err := c.git.Sha()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch git sha %s", err)
-	}
-
-	branch, err := c.git.Branch()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch git branch %s", err)
-	}
-
-	ver, err := c.gitSemVersion()
-	if err != nil {
-		return nil, err
-	}
-
-	version := *ver
-	prerel := ""
-	tagged := c.git.IsTagged()
-	if !tagged {
-		if branch == "head" && commits == 0 {
-			return nil, errors.New("this is likely an light-weight git tag. please use a annotated tag for helm release to function properly")
-		}
-		version = version.IncPatch()
-		if branch != "master" {
-			prerel = "0." + branch
-		}
-	}
-
-	if branch == "master" {
-		if commits != 0 {
-			if prerel != "" {
-				prerel += "."
-			}
-			prerel += strconv.Itoa(commits)
-		}
-	}
-
-	if prerel != "" {
-		version, err = version.SetPrerelease(prerel)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	version, err = version.SetMetadata(sha)
-	if err != nil {
-		return nil, err
-	}
-
-	verStr := version.String()
-	return &verStr, err
 }
 
 // UpdateChartVersion updates the version of the helm chart

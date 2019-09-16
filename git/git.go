@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Masterminds/semver"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,6 +20,8 @@ type Gitter interface {
 	Sha() (sha string, err error)
 	Branch() (string, error)
 	IsTagged() bool
+	NextVersion() (*string, error)
+	BumpVersion(string) (*string, error)
 }
 
 type git struct {
@@ -160,6 +163,101 @@ func (g *git) Branch() (string, error) {
 	branch = reg.ReplaceAllString(branch, ".")
 
 	return strings.ToLower(branch), err
+}
+
+func (g *git) gitSemVersion() (*semver.Version, error) {
+	tag, err := g.Tag()
+	if err != nil {
+		tag = "0.0.1"
+		log.Infof("unable to find any git tags using %s", tag)
+	}
+
+	tag = strings.TrimPrefix(tag, "v")
+	tag = strings.TrimPrefix(tag, "r")
+	ver, err := semver.NewVersion(tag)
+	if err != nil {
+		return nil, fmt.Errorf("%s %s", tag, err)
+	}
+	return ver, nil
+}
+
+func (g *git) BumpVersion(bump string) (*string, error) {
+	ver, err := g.gitSemVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	version := *ver
+	if bump == "major" {
+		version = version.IncMajor()
+	} else if bump == "minor" {
+		version = version.IncMinor()
+	} else {
+		version = version.IncPatch()
+	}
+
+	verStr := version.String()
+	return &verStr, err
+}
+
+// NextVersion determines the correct version
+func (g *git) NextVersion() (*string, error) {
+	commits, err := g.Commits()
+	if err != nil {
+		return nil, err
+	}
+
+	sha, err := g.Sha()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch git sha %s", err)
+	}
+
+	branch, err := g.Branch()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch git branch %s", err)
+	}
+
+	ver, err := g.gitSemVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	version := *ver
+	prerel := ""
+	tagged := g.IsTagged()
+	if !tagged {
+		if branch == "head" && commits == 0 {
+			return nil, errors.New("this is likely an light-weight git tag. please use a annotated tag for helm release to function properly")
+		}
+		version = version.IncPatch()
+		if branch != "master" {
+			prerel = "0." + branch
+		}
+	}
+
+	if branch == "master" {
+		if commits != 0 {
+			if prerel != "" {
+				prerel += "."
+			}
+			prerel += strconv.Itoa(commits)
+		}
+	}
+
+	if prerel != "" {
+		version, err = version.SetPrerelease(prerel)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	version, err = version.SetMetadata(sha)
+	if err != nil {
+		return nil, err
+	}
+
+	verStr := version.String()
+	return &verStr, err
 }
 
 func validate(dir string) error {
