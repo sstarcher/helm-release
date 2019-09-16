@@ -8,6 +8,7 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/sstarcher/helm-release/git"
 	"github.com/sstarcher/helm-release/helm"
 )
 
@@ -15,6 +16,7 @@ var cfgFile string
 var tag string
 var tagPath string
 var printComputedVersion bool
+var bump string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -29,18 +31,28 @@ var rootCmd = &cobra.Command{
 			dir = args[0]
 		}
 
-		chart, err := helm.New(dir)
-		if err != nil {
-			return err
-		}
-
-		version, err := chart.Version()
+		git, err := git.New(dir)
 		if err != nil {
 			return err
 		}
 
 		if printComputedVersion {
+			version, err := git.BumpVersion(bump)
+			if err != nil {
+				return err
+			}
+
 			_, err = os.Stdout.WriteString(*version)
+			return err
+		}
+
+		chart, err := helm.New(dir)
+		if err != nil {
+			return err
+		}
+
+		version, err := git.NextVersion()
+		if err != nil {
 			return err
 		}
 
@@ -81,6 +93,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&tag, "tag", "t", "", "Sets the docker image tag in values.yaml")
 	rootCmd.Flags().StringVar(&tagPath, "path", helm.DefaultTagPath, "Sets the path to the image tag to modify in values.yaml")
 	rootCmd.Flags().BoolVar(&printComputedVersion, "print-computed-version", false, "Print the computed version string to stdout")
+	rootCmd.Flags().StringVar(&bump, "bump", "", "Specifies to bump major, minor, or patch when using print-computed-version")
 }
 
 // initConfig reads in config file and ENV variables if set.
