@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/sstarcher/helm-release/git"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,18 +53,6 @@ func TestUpdateImageInvalidPath(t *testing.T) {
 	assert.NotNil(err)
 }
 
-func TestVersion(t *testing.T) {
-	assert := assert.New(t)
-
-	chart, err := New(noTags)
-	assert.Nil(err)
-	assert.NotNil(chart)
-
-	version, err := chart.Version()
-	assert.Nil(err)
-	assert.NotNil(version)
-}
-
 var versionTests = []struct {
 	branch   string
 	tag      string
@@ -95,7 +84,10 @@ func TestVersions(t *testing.T) {
 		os.Setenv("COMMITS", tt.commits)
 		os.Setenv("IS_TAGGED", strconv.FormatBool(tt.tagged))
 
-		actual, err := chart.Version()
+		git, err := git.New(".")
+		assert.Nil(err)
+
+		actual, err := git.NextVersion()
 		assert.Nil(err)
 		if actual != nil {
 			assert.Equal(tt.expected, *actual)

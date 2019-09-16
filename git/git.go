@@ -41,9 +41,8 @@ func New(directory string) (Gitter, error) {
 
 // ~r4.8-40-g56a99c2~
 func (g *git) Tag() (tag string, err error) {
-	tag = os.Getenv("LAST_TAG")
-
-	if tag != "" {
+	tag, exists := os.LookupEnv("LAST_TAG")
+	if exists {
 		return
 	}
 
@@ -167,7 +166,7 @@ func (g *git) Branch() (string, error) {
 
 func (g *git) gitSemVersion() (*semver.Version, error) {
 	tag, err := g.Tag()
-	if err != nil {
+	if err != nil || tag == "" {
 		tag = "0.0.1"
 		log.Infof("unable to find any git tags using %s", tag)
 	}
