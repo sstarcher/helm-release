@@ -1,5 +1,5 @@
 name: "release"
-version: "0.2.1"
+version: "0.2.2"
 usage: "Determines the charts next release number"
 description: |-
   This plugin will use environment variables and git history to divine the next chart version.
