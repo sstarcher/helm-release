@@ -14,9 +14,9 @@ var noTags = "../tests/notags"
 func TestFindCharts(t *testing.T) {
 	assert := assert.New(t)
 
-	charts := findCharts(noTags)
-	assert.NotZero(len(charts))
-	assert.Equal("notags", charts[0].Name)
+	chart := findChart(noTags)
+	assert.NotNil(chart)
+	assert.Equal("notags", chart.Name)
 }
 
 func TestUpdateChart(t *testing.T) {
