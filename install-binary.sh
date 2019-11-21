@@ -5,14 +5,22 @@
 PROJECT_NAME="helm-release"
 PROJECT_GH="sstarcher/$PROJECT_NAME"
 
-: ${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-release"}
+helm_version=$(helm version --template '{{ .Version }}')
+if [ "${helm_version:0:2}" == "v2" ]; then
+  : "${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-release"}"
 
-# Convert the HELM_PLUGIN_PATH to unix if cygpath is
-# available. This is the case when using MSYS2 or Cygwin
-# on Windows where helm returns a Windows path but we
-# need a Unix path
-if type cygpath > /dev/null 2>&1; then
-  HELM_PLUGIN_PATH=$(cygpath -u $HELM_PLUGIN_PATH)
+  # Convert the HELM_PLUGIN_PATH to unix if cygpath is
+  # available. This is the case when using MSYS2 or Cygwin
+  # on Windows where helm returns a Windows path but we
+  # need a Unix path
+  if type cygpath > /dev/null 2>&1; then
+    HELM_PLUGIN_PATH=$(cygpath -u "${HELM_PLUGIN_PATH}")
+  fi
+elif [ "${helm_version:0:2}" == "v3" ]; then
+  eval "$(helm env)"
+else
+  echo "helm version not supported or not found"
+  exit 1;
 fi
 
 if [[ $SKIP_BIN_INSTALL == "1" ]]; then
@@ -37,7 +45,7 @@ initArch() {
 
 # initOS discovers the operating system for this system.
 initOS() {
-  OS=$(echo `uname`|tr '[:upper:]' '[:lower:]')
+  OS=$(uname | tr '[:upper:]' '[:lower:]')
 
   case "$OS" in
     # Msys support
