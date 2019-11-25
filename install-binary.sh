@@ -89,9 +89,9 @@ getDownloadURL() {
   if [ -z "${DOWNLOAD_URL}" ]; then
     echo "download url returned nothing"
     while [ "${download_url_attempts}" -lt 10 ]; do
-      sleep 3
-      getDownloadURL
+      sleep 5
       download_url_attempts=$(( download_url_attempts + 1 ))
+      getDownloadURL
     done
     echo "Down url attempts failed"
     exit 1;
