@@ -76,6 +76,7 @@ verifySupported() {
   fi
 }
 
+download_url_attempts=0
 # getDownloadURL checks the latest available version.
 getDownloadURL() {
   # Use the GitHub API to find the latest version for this project.
@@ -84,6 +85,14 @@ getDownloadURL() {
     DOWNLOAD_URL=$(curl -s $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" > /dev/null; then
     DOWNLOAD_URL=$(wget -q -O - $latest_url | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+  fi
+  if [ -z "${DOWNLOAD_URL}" ]; then
+    echo "download url returned nothing"
+    sleep 3
+    download_url_attemps=$(( download_url_attemps + 1 ))
+    if [ "${download_url_attemps}" -gt 10 ]; then
+      echo "Down url attempts failed"
+      exit 1;
   fi
 }
 
