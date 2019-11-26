@@ -76,26 +76,16 @@ verifySupported() {
   fi
 }
 
-download_url_attempts=0
 # getDownloadURL checks the latest available version.
 getDownloadURL() {
   # Use the GitHub API to find the latest version for this project.
   local latest_url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
   if type "curl" > /dev/null; then
+    # This is so if you can see if you have hit githubs rate limits
     latest_url_payload=$(curl -s $latest_url)
     DOWNLOAD_URL=$(echo "${latest_url_payload}" | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" > /dev/null; then
     DOWNLOAD_URL=$(wget -q -O - $latest_url | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
-  fi
-  if [ -z "${DOWNLOAD_URL}" ]; then
-    echo "download url returned nothing"
-    while [ "${download_url_attempts}" -lt 10 ]; do
-      sleep 5
-      download_url_attempts=$(( download_url_attempts + 1 ))
-      getDownloadURL
-    done
-    echo "Down url attempts failed"
-    exit 1;
   fi
 }
 
