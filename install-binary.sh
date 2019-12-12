@@ -1,18 +1,33 @@
 #!/usr/bin/env bash
 
-# Based off ofhttps://github.com/technosophos/helm-template/blob/master/install-binary.sh
+# Based off of https://github.com/technosophos/helm-template/blob/master/install-binary.sh
 
 PROJECT_NAME="helm-release"
 PROJECT_GH="sstarcher/$PROJECT_NAME"
 
-: ${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-release"}
+helm_version=$(helm version --client --template '{{ .Version }}')
+if [ "${helm_version}" == "<no value>" ]; then
+  # Assume this means v2
+  helm_version="v2"
+fi
 
-# Convert the HELM_PLUGIN_PATH to unix if cygpath is
-# available. This is the case when using MSYS2 or Cygwin
-# on Windows where helm returns a Windows path but we
-# need a Unix path
-if type cygpath > /dev/null 2>&1; then
-  HELM_PLUGIN_PATH=$(cygpath -u $HELM_PLUGIN_PATH)
+if [ "${helm_version:0:2}" == "v2" ]; then
+  : "${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-release"}"
+
+  # Convert the HELM_PLUGIN_PATH to unix if cygpath is
+  # available. This is the case when using MSYS2 or Cygwin
+  # on Windows where helm returns a Windows path but we
+  # need a Unix path
+  if type cygpath > /dev/null 2>&1; then
+    HELM_PLUGIN_PATH=$(cygpath -u "${HELM_PLUGIN_PATH}")
+  fi
+elif [ "${helm_version:0:2}" == "v3" ]; then
+  eval "$(helm env)"
+
+  HELM_PLUGIN_PATH="${HELM_PLUGINS}"
+else
+  echo "helm version not supported or not found"
+  exit 1;
 fi
 
 if [[ $SKIP_BIN_INSTALL == "1" ]]; then
@@ -37,7 +52,7 @@ initArch() {
 
 # initOS discovers the operating system for this system.
 initOS() {
-  OS=$(echo `uname`|tr '[:upper:]' '[:lower:]')
+  OS=$(uname | tr '[:upper:]' '[:lower:]')
 
   case "$OS" in
     # Msys support
@@ -68,7 +83,9 @@ getDownloadURL() {
   # Use the GitHub API to find the latest version for this project.
   local latest_url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
   if type "curl" > /dev/null; then
-    DOWNLOAD_URL=$(curl -s $latest_url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+    # This is so if you can see if you have hit githubs rate limits
+    latest_url_payload=$(curl -s $latest_url)
+    DOWNLOAD_URL=$(echo "${latest_url_payload}" | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   elif type "wget" > /dev/null; then
     DOWNLOAD_URL=$(wget -q -O - $latest_url | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
@@ -94,8 +111,17 @@ installFile() {
   tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP"
   HELM_TMP_BIN="$HELM_TMP/${PROJECT_NAME}"
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
-  # Use * to also copy the file withe the exe suffix on Windows
-  cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
+  if [ "${helm_version:0:2}" == "v2" ]; then
+    # Use * to also copy the file withe the exe suffix on Windows
+    cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
+  elif [ "${helm_version:0:2}" == "v3" ]; then
+    ln -s "$(dirname "${0}")" "${HELM_PLUGIN_PATH}/${PROJECT_NAME}"
+    # Use * to also copy the file withe the exe suffix on Windows
+    cp -r "${HELM_TMP_BIN}" "${HELM_PLUGIN_PATH}/${PROJECT_NAME}/"
+  else
+    echo "helm version not supported or not found"
+    exit 1;
+  fi
 }
 
 # fail_trap is executed if an error occurs.
@@ -112,9 +138,16 @@ fail_trap() {
 testVersion() {
   set +e
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH/$PROJECT_NAME"
-  # To avoid to keep track of the Windows suffix,
-  # call the plugin assuming it is in the PATH
-  PATH=$PATH:$HELM_PLUGIN_PATH
+  if [ "${helm_version:0:2}" == "v2" ]; then
+    # To avoid to keep track of the Windows suffix,
+    # call the plugin assuming it is in the PATH
+    PATH=$PATH:$HELM_PLUGIN_PATH
+  elif [ "${helm_version:0:2}" == "v3" ]; then
+    PATH=$PATH:$HELM_PLUGIN_PATH/$PROJECT_NAME
+  else
+    echo "helm version not supported or not found"
+    exit 1;
+  fi
   ${PROJECT_NAME} -h
   set -e
 }
