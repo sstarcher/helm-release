@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-set -x
-
 # Based off of https://github.com/technosophos/helm-template/blob/master/install-binary.sh
 
 PROJECT_NAME="helm-release"
