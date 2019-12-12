@@ -5,7 +5,12 @@
 PROJECT_NAME="helm-release"
 PROJECT_GH="sstarcher/$PROJECT_NAME"
 
-helm_version=$(helm version --template '{{ .Version }}')
+helm_version=$(helm version --client --template '{{ .Version }}')
+if [ "${helm_version}" == "<no value>" ]; then
+  # Assume this means v2
+  helm_version="v2"
+fi
+
 if [ "${helm_version:0:2}" == "v2" ]; then
   : "${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-release"}"
 
