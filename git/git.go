@@ -171,6 +171,58 @@ func (g *Git) Get() (*semver.Version, error) {
 	return ver, nil
 }
 
+func (g *Git) versionFromHistory(ver *semver.Version) (*semver.Version, error) {
+	commits, err := g.commits()
+	if err != nil {
+		return nil, err
+	}
+
+	sha, err := g.sha()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch git sha %s", err)
+	}
+
+	branch, err := g.branch()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch git branch %s", err)
+	}
+
+	version := *ver
+	prerel := ""
+	tagged := g.isTagged()
+	if !tagged {
+		if branch == "head" && commits == 0 {
+			return nil, errors.New("this is likely an light-weight git tag. please use a annotated tag for helm release to function properly")
+		}
+		version = version.IncPatch()
+		if branch != "master" {
+			prerel = "0." + branch
+		}
+	}
+
+	if branch == "master" {
+		if commits != 0 {
+			if prerel != "" {
+				prerel += "."
+			}
+			prerel += strconv.Itoa(commits)
+		}
+	}
+
+	if prerel != "" {
+		version, err = version.SetPrerelease(prerel)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	version, err = version.SetMetadata(sha)
+	if err != nil {
+		return nil, err
+	}
+	return &version, err
+}
+
 // NextVersion determines the correct version
 func (g *Git) NextVersion(nextType *version.NextType) (*semver.Version, error) {
 	ver, err := g.Get()
@@ -179,55 +231,7 @@ func (g *Git) NextVersion(nextType *version.NextType) (*semver.Version, error) {
 	}
 
 	if nextType == nil { // Determine from git history
-		commits, err := g.commits()
-		if err != nil {
-			return nil, err
-		}
-
-		sha, err := g.sha()
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch git sha %s", err)
-		}
-
-		branch, err := g.branch()
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch git branch %s", err)
-		}
-
-		version := *ver
-		prerel := ""
-		tagged := g.isTagged()
-		if !tagged {
-			if branch == "head" && commits == 0 {
-				return nil, errors.New("this is likely an light-weight git tag. please use a annotated tag for helm release to function properly")
-			}
-			version = version.IncPatch()
-			if branch != "master" {
-				prerel = "0." + branch
-			}
-		}
-
-		if branch == "master" {
-			if commits != 0 {
-				if prerel != "" {
-					prerel += "."
-				}
-				prerel += strconv.Itoa(commits)
-			}
-		}
-
-		if prerel != "" {
-			version, err = version.SetPrerelease(prerel)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		version, err = version.SetMetadata(sha)
-		if err != nil {
-			return nil, err
-		}
-		return &version, err
+		return g.versionFromHistory(ver)
 	}
 	return version.NextVersion(ver, nextType)
 }
