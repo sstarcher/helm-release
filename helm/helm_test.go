@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/Masterminds/semver"
 	"github.com/sstarcher/helm-release/git"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,18 +23,19 @@ func TestFindCharts(t *testing.T) {
 func TestUpdateChart(t *testing.T) {
 	assert := assert.New(t)
 
-	chart, err := New(noTags)
+	chart, err := New(noTags, nil)
 	assert.Nil(err)
 	assert.NotNil(chart)
 
-	err = chart.UpdateChartVersion("1.1.1")
+	ver, _ := semver.NewVersion("1.1.1")
+	err = chart.Set(ver)
 	assert.Nil(err)
 }
 
 func TestUpdateImage(t *testing.T) {
 	assert := assert.New(t)
 
-	chart, err := New(noTags)
+	chart, err := New(noTags, nil)
 	assert.Nil(err)
 	assert.NotNil(chart)
 
@@ -44,11 +46,11 @@ func TestUpdateImage(t *testing.T) {
 func TestUpdateImageInvalidPath(t *testing.T) {
 	assert := assert.New(t)
 
-	chart, err := New(noTags)
+	tag := "invalid"
+	chart, err := New(noTags, &tag)
 	assert.Nil(err)
 	assert.NotNil(chart)
 
-	chart.TagPath = "invalid"
 	err = chart.UpdateImageVersion("1.1.1")
 	assert.NotNil(err)
 }
@@ -73,7 +75,7 @@ var versionTests = []struct {
 func TestVersions(t *testing.T) {
 	assert := assert.New(t)
 
-	chart, err := New(noTags)
+	chart, err := New(noTags, nil)
 	assert.Nil(err)
 	assert.NotNil(chart)
 
@@ -87,10 +89,10 @@ func TestVersions(t *testing.T) {
 		git, err := git.New(".")
 		assert.Nil(err)
 
-		actual, err := git.NextVersion()
+		actual, err := git.NextVersion(nil)
 		assert.Nil(err)
 		if actual != nil {
-			assert.Equal(tt.expected, *actual)
+			assert.Equal(tt.expected, actual.String())
 		} else {
 			assert.Fail("nil results")
 		}

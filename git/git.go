@@ -11,36 +11,26 @@ import (
 
 	"github.com/Masterminds/semver"
 	log "github.com/sirupsen/logrus"
+	"github.com/sstarcher/helm-release/version"
 )
 
-// Gitter is a wrapper around the git functionality needed
-type Gitter interface {
-	Tag() (tag string, err error)
-	Commits() (commits int, err error)
-	Sha() (sha string, err error)
-	Branch() (string, error)
-	IsTagged() bool
-	NextVersion() (*string, error)
-	BumpVersion(string) (*string, error)
-}
-
-type git struct {
+type Git struct {
 	directory string
 }
 
 // New creates the structure
-func New(directory string) (Gitter, error) {
+func New(directory string) (version.Getter, error) {
 	err := validate(directory)
 	if err != nil {
 		return nil, err
 	}
-	return &git{
+	return &Git{
 		directory: directory,
 	}, nil
 }
 
 // ~r4.8-40-g56a99c2~
-func (g *git) Tag() (tag string, err error) {
+func (g *Git) tag() (tag string, err error) {
 	tag, exists := os.LookupEnv("LAST_TAG")
 	if exists {
 		return
@@ -74,7 +64,7 @@ func (g *git) Tag() (tag string, err error) {
 	return
 }
 
-func (g *git) IsTagged() bool {
+func (g *Git) isTagged() bool {
 	tag := os.Getenv("IS_TAGGED")
 	if tag != "" {
 		b, err := strconv.ParseBool(tag)
@@ -88,7 +78,7 @@ func (g *git) IsTagged() bool {
 	return err == nil
 }
 
-func (g *git) Commits() (commits int, err error) {
+func (g *Git) commits() (commits int, err error) {
 	commitStr := os.Getenv("COMMITS")
 	commits = -1
 	if commitStr != "" {
@@ -129,7 +119,7 @@ func (g *git) Commits() (commits int, err error) {
 }
 
 // Sha returns the short git sha of the repo
-func (g *git) Sha() (string, error) {
+func (g *Git) sha() (string, error) {
 	sha := os.Getenv("SHA")
 	if sha != "" {
 		if len(sha) == 7 {
@@ -144,7 +134,7 @@ func (g *git) Sha() (string, error) {
 }
 
 // Branch returns the branch reference of the repo
-func (g *git) Branch() (string, error) {
+func (g *Git) branch() (string, error) {
 	branch := os.Getenv("BRANCH_NAME")
 
 	if branch == "" {
@@ -164,8 +154,9 @@ func (g *git) Branch() (string, error) {
 	return strings.ToLower(branch), err
 }
 
-func (g *git) gitSemVersion() (*semver.Version, error) {
-	tag, err := g.Tag()
+// Get the semantic version from git
+func (g *Git) Get() (*semver.Version, error) {
+	tag, err := g.tag()
 	if err != nil || tag == "" {
 		tag = "0.0.1"
 		log.Infof("unable to find any git tags using %s", tag)
@@ -180,83 +171,65 @@ func (g *git) gitSemVersion() (*semver.Version, error) {
 	return ver, nil
 }
 
-func (g *git) BumpVersion(bump string) (*string, error) {
-	ver, err := g.gitSemVersion()
-	if err != nil {
-		return nil, err
-	}
-
-	version := *ver
-	if bump == "major" {
-		version = version.IncMajor()
-	} else if bump == "minor" {
-		version = version.IncMinor()
-	} else {
-		version = version.IncPatch()
-	}
-
-	verStr := version.String()
-	return &verStr, err
-}
-
 // NextVersion determines the correct version
-func (g *git) NextVersion() (*string, error) {
-	commits, err := g.Commits()
+func (g *Git) NextVersion(nextType *version.NextType) (*semver.Version, error) {
+	ver, err := g.Get()
 	if err != nil {
 		return nil, err
 	}
 
-	sha, err := g.Sha()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch git sha %s", err)
-	}
-
-	branch, err := g.Branch()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch git branch %s", err)
-	}
-
-	ver, err := g.gitSemVersion()
-	if err != nil {
-		return nil, err
-	}
-
-	version := *ver
-	prerel := ""
-	tagged := g.IsTagged()
-	if !tagged {
-		if branch == "head" && commits == 0 {
-			return nil, errors.New("this is likely an light-weight git tag. please use a annotated tag for helm release to function properly")
-		}
-		version = version.IncPatch()
-		if branch != "master" {
-			prerel = "0." + branch
-		}
-	}
-
-	if branch == "master" {
-		if commits != 0 {
-			if prerel != "" {
-				prerel += "."
-			}
-			prerel += strconv.Itoa(commits)
-		}
-	}
-
-	if prerel != "" {
-		version, err = version.SetPrerelease(prerel)
+	if nextType == nil { // Determine from git history
+		commits, err := g.commits()
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	version, err = version.SetMetadata(sha)
-	if err != nil {
-		return nil, err
-	}
+		sha, err := g.sha()
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch git sha %s", err)
+		}
 
-	verStr := version.String()
-	return &verStr, err
+		branch, err := g.branch()
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch git branch %s", err)
+		}
+
+		version := *ver
+		prerel := ""
+		tagged := g.isTagged()
+		if !tagged {
+			if branch == "head" && commits == 0 {
+				return nil, errors.New("this is likely an light-weight git tag. please use a annotated tag for helm release to function properly")
+			}
+			version = version.IncPatch()
+			if branch != "master" {
+				prerel = "0." + branch
+			}
+		}
+
+		if branch == "master" {
+			if commits != 0 {
+				if prerel != "" {
+					prerel += "."
+				}
+				prerel += strconv.Itoa(commits)
+			}
+		}
+
+		if prerel != "" {
+			version, err = version.SetPrerelease(prerel)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		version, err = version.SetMetadata(sha)
+		if err != nil {
+			return nil, err
+		}
+		return &version, err
+	}
+	return version.NextVersion(ver, nextType)
 }
 
 func validate(dir string) error {
@@ -267,7 +240,7 @@ func validate(dir string) error {
 	return err
 }
 
-func (g *git) run(command ...string) (result string, err error) {
+func (g *Git) run(command ...string) (result string, err error) {
 	cmd := exec.Command("git", command...)
 	cmd.Dir = g.directory
 	out, err := cmd.CombinedOutput()
