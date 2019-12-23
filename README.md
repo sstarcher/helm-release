@@ -19,7 +19,16 @@ You can install a specific release version:
 * helm release CHART -t 12345 - Would update Chart.yaml and modify values.yaml images.tag to equal 12345
 * helm release CHART --print-computed-version - Would determine the next tag and print it to STDOUT
 
-## Release Logic
+# Source
+
+Helm Release supports different release logic for difference sources
+
+### Helm
+
+When using the `--source helm` you must specify `--bump` of major, minor, or patch.
+
+### Git
+#### Release Logic
 
 To describe the release naming process we will use the following nomenclature.
 * LAST_TAG - finds the previous tag from the git history using `git describe --tags`
@@ -35,18 +44,18 @@ To describe the release naming process we will use the following nomenclature.
 
 The default version for a branch is `NEXT_TAG-0.BRANCH-COMMITS+SHA`
 
-### Tags
+#### Tags
 
 When COMMITS is equal to 0 we assume the intent is to do a release of the current commit and the version will be the tag itself `TAG+SHA`
 
 *NOTE* Tags should be annotated tags and not lightweight tags.  Tags created in the Github UI will be lightweight tags by default.
 
 
-### Master branch
+#### Master branch
 
 The master branch is treated differently from the default and will be `NEXT_TAG-COMMITS+SHA`
 
-### Integrated Support for Jenkins and PR branches
+#### Integrated Support for Jenkins and PR branches
 
 Jenkins uses the environment variable BRANCH_NAME with the value of the PR example `PR-97`.  This will result in a release version of `NEXT_TAG-0.pr-97-COMMITS+SHA`
 
