@@ -41,6 +41,9 @@ var rootCmd = &cobra.Command{
 			}
 			getter = source.(version.Getter)
 		} else if source == "helm" {
+			if bump == "" {
+				log.Fatal("--bump must be specified when using a helm source")
+			}
 			source, err := helm.New(dir, nil)
 			if err != nil {
 				return err
