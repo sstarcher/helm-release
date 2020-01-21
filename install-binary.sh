@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # Based off of https://github.com/technosophos/helm-template/blob/master/install-binary.sh
-
 PROJECT_NAME="helm-release"
 PROJECT_GH="sstarcher/$PROJECT_NAME"
 
@@ -111,10 +110,11 @@ installFile() {
   tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP"
   HELM_TMP_BIN="$HELM_TMP/${PROJECT_NAME}"
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
-  if [ "${helm_version:0:2}" == "v2" ]; then
-    # Use * to also copy the file withe the exe suffix on Windows
-    cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
+  DST="$HELM_PLUGIN_PATH"
+  if [ "${helm_version:0:2}" == "v3" ]; then
+    DST="${HELM_PLUGIN_PATH}/${PROJECT_NAME}/"
   fi
+  cp "$HELM_TMP_BIN"* "${DST}"
 }
 
 # fail_trap is executed if an error occurs.
