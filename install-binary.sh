@@ -114,13 +114,6 @@ installFile() {
   if [ "${helm_version:0:2}" == "v2" ]; then
     # Use * to also copy the file withe the exe suffix on Windows
     cp "$HELM_TMP_BIN"* "$HELM_PLUGIN_PATH"
-  elif [ "${helm_version:0:2}" == "v3" ]; then
-    ln -s "$(dirname "${0}")" "${HELM_PLUGIN_PATH}/${PROJECT_NAME}"
-    # Use * to also copy the file withe the exe suffix on Windows
-    cp -r "${HELM_TMP_BIN}" "${HELM_PLUGIN_PATH}/${PROJECT_NAME}/"
-  else
-    echo "helm version not supported or not found"
-    exit 1;
   fi
 }
 
