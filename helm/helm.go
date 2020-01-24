@@ -9,27 +9,40 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Masterminds/semver"
+	"github.com/sstarcher/helm-release/version"
 	"gopkg.in/yaml.v2"
 )
 
 // DefaultTagPath is the default path to the image tag in a helm values.yaml
 var DefaultTagPath = "image.tag"
 
+// ChartInterface for helm
+type ChartInterface interface {
+	version.Getter
+	version.Setter
+	UpdateImageVersion(string) error
+}
+
 // Chart defines a Helm Chart
 type Chart struct {
 	Name    string
 	path    string
-	TagPath string
+	tagPath string
 }
 
 // New finds the helm chart in the directory and returns a Chart object
-func New(dir string) (*Chart, error) {
+func New(dir string, tagPath *string) (ChartInterface, error) {
 	chart := findChart(dir)
 	if chart == nil {
 		return nil, errors.New("unable to find a Chart.yaml")
 	}
 
-	chart.TagPath = "image.tag"
+	chart.tagPath = DefaultTagPath
+	if tagPath != nil {
+		chart.tagPath = *tagPath
+	}
+
 	return chart, nil
 }
 
@@ -50,7 +63,7 @@ func findChart(dir string) (chart *Chart) {
 }
 
 // UpdateChartVersion updates the version of the helm chart
-func (c *Chart) UpdateChartVersion(chartVersion string) error {
+func (c *Chart) Set(version *semver.Version) error {
 	var config map[interface{}]interface{}
 	source, err := ioutil.ReadFile(c.path + "/Chart.yaml")
 	if err != nil {
@@ -61,7 +74,7 @@ func (c *Chart) UpdateChartVersion(chartVersion string) error {
 		return err
 	}
 
-	config["version"] = chartVersion
+	config["version"] = version.String()
 
 	out, err := yaml.Marshal(&config)
 	if err != nil {
@@ -92,24 +105,24 @@ func (c *Chart) UpdateImageVersion(dockerVersion string) error {
 		return errors.New("the values.yaml file is empty")
 	}
 
-	pathArray := strings.Split(c.TagPath, ".")
+	pathArray := strings.Split(c.tagPath, ".")
 	for i := 0; i < len(pathArray); i++ {
 		k := pathArray[i]
 		switch objMap := obj.(type) {
 		case map[interface{}]interface{}:
 			if i == len(pathArray)-1 {
 				if _, ok := objMap[k]; !ok {
-					return fmt.Errorf("final key in path does not exist %s for path %s", k, c.TagPath)
+					return fmt.Errorf("final key in path does not exist %s for path %s", k, c.tagPath)
 				}
 				objMap[k] = dockerVersion
 				break
 			}
 			obj = objMap[k]
 			if obj == nil {
-				return fmt.Errorf("unable to process %s", c.TagPath)
+				return fmt.Errorf("unable to process %s", c.tagPath)
 			}
 		default:
-			return fmt.Errorf("while processing key[%s] for path[%s] expected a map, but got %T", k, c.TagPath, objMap)
+			return fmt.Errorf("while processing key[%s] for path[%s] expected a map, but got %T", k, c.tagPath, objMap)
 		}
 
 	}
@@ -125,4 +138,33 @@ func (c *Chart) UpdateImageVersion(dockerVersion string) error {
 	}
 
 	return nil
+}
+
+// Get version from Chart.yaml
+func (c *Chart) Get() (*semver.Version, error) {
+	var config map[interface{}]interface{}
+	source, err := ioutil.ReadFile(c.path + "/Chart.yaml")
+	if err != nil {
+		return nil, err
+	}
+	err = yaml.Unmarshal(source, &config)
+	if err != nil {
+		return nil, err
+	}
+
+	if config["version"] == nil {
+		return nil, fmt.Errorf("%s/Chart.yaml is missing a version", c.path)
+	}
+
+	return semver.NewVersion(config["version"].(string))
+}
+
+// NextVersion from current version
+func (c *Chart) NextVersion(nextType *version.NextType) (*semver.Version, error) {
+	ver, err := c.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	return version.NextVersion(ver, nextType)
 }

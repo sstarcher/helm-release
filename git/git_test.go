@@ -13,29 +13,30 @@ var noTagsDir = "../tests/notags"
 func TestValidGitRepo(t *testing.T) {
 	assert := assert.New(t)
 
-	git, err := New(dir)
-	assert.Nil(err)
+	git := Git{
+		directory: dir,
+	}
 
-	tag, err := git.Tag()
+	tag, err := git.tag()
 	assert.Nil(err)
 	assert.NotNil(tag)
 
-	commits, err := git.Commits()
+	commits, err := git.commits()
 	assert.Nil(err)
 	assert.NotNil(commits)
 
-	sha, err := git.Sha()
+	sha, err := git.sha()
 	assert.Len(sha, 7)
 }
 
 func TestValidRepoSha(t *testing.T) {
 	assert := assert.New(t)
 
-	git, err := New(dir)
-	assert.Nil(err)
-	assert.NotNil(git)
+	git := Git{
+		directory: dir,
+	}
 
-	result, err := git.Sha()
+	result, err := git.sha()
 	assert.Nil(err)
 	assert.NotNil(result)
 	assert.Len(result, 7)
@@ -44,8 +45,10 @@ func TestValidRepoSha(t *testing.T) {
 func TestValidRepoBranch(t *testing.T) {
 	assert := assert.New(t)
 
-	git, err := New(dir)
-	result, err := git.Branch()
+	git := Git{
+		directory: dir,
+	}
+	result, err := git.branch()
 	assert.Nil(err)
 	assert.NotEmpty(result)
 }
@@ -69,11 +72,12 @@ var branchTests = []struct {
 func TestBranches(t *testing.T) {
 	assert := assert.New(t)
 
-	git, err := New(dir)
-	assert.Nil(err)
+	git := Git{
+		directory: dir,
+	}
 	for _, tt := range branchTests {
 		os.Setenv("BRANCH_NAME", tt.branch)
-		actual, err := git.Branch()
+		actual, err := git.branch()
 		assert.Nil(err)
 		assert.Equal(tt.expected, actual)
 		os.Unsetenv("BRANCH_NAME")
@@ -83,17 +87,19 @@ func TestBranches(t *testing.T) {
 func TestNoTags(t *testing.T) {
 	assert := assert.New(t)
 
-	git, err := New(noTagsDir)
+	git := Git{
+		directory: noTagsDir,
+	}
 
-	branch, err := git.Branch()
+	branch, err := git.branch()
 	assert.Nil(err)
 	assert.NotNil(branch)
 
-	commits, err := git.Commits()
+	commits, err := git.commits()
 	assert.Nil(err)
 	assert.Equal(2, commits)
 
-	tag, err := git.Tag()
+	tag, err := git.tag()
 	assert.NotNil(err)
 	assert.Empty(tag)
 }

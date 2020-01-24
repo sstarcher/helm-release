@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/sstarcher/helm-release/git"
 	"github.com/sstarcher/helm-release/helm"
+	"github.com/sstarcher/helm-release/version"
 )
 
 var cfgFile string
@@ -17,6 +18,7 @@ var tag string
 var tagPath string
 var printComputedVersion bool
 var bump string
+var source string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -31,36 +33,56 @@ var rootCmd = &cobra.Command{
 			dir = args[0]
 		}
 
-		git, err := git.New(dir)
-		if err != nil {
-			return err
+		var getter version.Getter
+		if source == "git" {
+			source, err := git.New(dir)
+			if err != nil {
+				return err
+			}
+			getter = source.(version.Getter)
+		} else if source == "helm" {
+			if bump == "" {
+				log.Fatal("--bump must be specified when using a helm source")
+			}
+			source, err := helm.New(dir, nil)
+			if err != nil {
+				return err
+			}
+			getter = source.(version.Getter)
+		} else {
+			log.Fatalf("invalid input for source %s", source)
 		}
 
+		nextType := version.NewNextType(bump)
 		if printComputedVersion {
-			version, err := git.BumpVersion(bump)
+			value, err := getter.Get()
 			if err != nil {
 				return err
 			}
 
-			_, err = os.Stdout.WriteString(*version)
+			ver, err := version.NextVersion(value, nextType)
+			if err != nil {
+				return err
+			}
+
+			_, err = os.Stdout.WriteString(ver.String())
 			return err
 		}
 
-		chart, err := helm.New(dir)
+		chart, err := helm.New(dir, &tagPath)
 		if err != nil {
 			return err
 		}
 
-		version, err := git.NextVersion()
+		version, err := getter.NextVersion(nextType)
 		if err != nil {
 			return err
 		}
 
-		log.Infof("updating the Chart.yaml to version %s", *version)
+		log.Infof("updating the Chart.yaml to version %s", version.String())
 
-		chart.UpdateChartVersion(*version)
+		chart.Set(version)
 		if tag != "" {
-			chart.TagPath = tagPath
 			err = chart.UpdateImageVersion(tag)
 			if err != nil {
 				return err
@@ -94,6 +116,7 @@ func init() {
 	rootCmd.Flags().StringVar(&tagPath, "path", helm.DefaultTagPath, "Sets the path to the image tag to modify in values.yaml")
 	rootCmd.Flags().BoolVar(&printComputedVersion, "print-computed-version", false, "Print the computed version string to stdout")
 	rootCmd.Flags().StringVar(&bump, "bump", "", "Specifies to bump major, minor, or patch when using print-computed-version")
+	rootCmd.Flags().StringVar(&source, "source", "git", "Specifies the source of the version information options (git, helm)")
 }
 
 // initConfig reads in config file and ENV variables if set.
