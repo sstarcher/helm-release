@@ -70,7 +70,6 @@ func (c *Chart) Set(version *semver.Version) error {
 
 // UpdateChart updates the version of the helm chart and appVersion
 func (c *Chart) UpdateChart(version *semver.Version, imageVersion string) error {
-	fmt.Println(imageVersion)
 	var config map[interface{}]interface{}
 	source, err := ioutil.ReadFile(c.path + "/Chart.yaml")
 	if err != nil {
