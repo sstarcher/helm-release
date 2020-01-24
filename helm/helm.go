@@ -22,6 +22,7 @@ type ChartInterface interface {
 	version.Getter
 	version.Setter
 	UpdateImageVersion(string) error
+	UpdateChart(*semver.Version, string) error
 }
 
 // Chart defines a Helm Chart
@@ -62,8 +63,14 @@ func findChart(dir string) (chart *Chart) {
 	return chart
 }
 
-// UpdateChartVersion updates the version of the helm chart
+// Set updates the version of the helm chart
 func (c *Chart) Set(version *semver.Version) error {
+	return c.UpdateChart(version, "")
+}
+
+// UpdateChart updates the version of the helm chart and appVersion
+func (c *Chart) UpdateChart(version *semver.Version, imageVersion string) error {
+	fmt.Println(imageVersion)
 	var config map[interface{}]interface{}
 	source, err := ioutil.ReadFile(c.path + "/Chart.yaml")
 	if err != nil {
@@ -75,6 +82,11 @@ func (c *Chart) Set(version *semver.Version) error {
 	}
 
 	config["version"] = version.String()
+	if imageVersion != "" {
+		if _, ok := config["appVersion"]; ok {
+			config["appVersion"] = imageVersion
+		}
+	}
 
 	out, err := yaml.Marshal(&config)
 	if err != nil {
@@ -89,7 +101,7 @@ func (c *Chart) Set(version *semver.Version) error {
 }
 
 // UpdateImageVersion replaces the image tag in the values.yaml
-func (c *Chart) UpdateImageVersion(dockerVersion string) error {
+func (c *Chart) UpdateImageVersion(imageVersion string) error {
 	var values interface{}
 	valuesData, err := ioutil.ReadFile(c.path + "/values.yaml")
 	if err != nil {
@@ -114,7 +126,7 @@ func (c *Chart) UpdateImageVersion(dockerVersion string) error {
 				if _, ok := objMap[k]; !ok {
 					return fmt.Errorf("final key in path does not exist %s for path %s", k, c.tagPath)
 				}
-				objMap[k] = dockerVersion
+				objMap[k] = imageVersion
 				break
 			}
 			obj = objMap[k]

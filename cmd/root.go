@@ -81,13 +81,19 @@ var rootCmd = &cobra.Command{
 
 		log.Infof("updating the Chart.yaml to version %s", version.String())
 
-		chart.Set(version)
+		ver, _ := getter.Get()
+
 		if tag != "" {
 			err = chart.UpdateImageVersion(tag)
 			if err != nil {
 				return err
 			}
+		} else {
+			if ver.Metadata() == "" {
+				tag = ver.String()
+			}
 		}
+		chart.UpdateChart(version, tag)
 
 		return nil
 	},
