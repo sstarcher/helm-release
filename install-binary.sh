@@ -4,6 +4,8 @@
 PROJECT_NAME="helm-release"
 PROJECT_GH="sstarcher/$PROJECT_NAME"
 
+[ -n "${DEBUG+x}" ] && set -x
+
 helm_version=$(helm version --client --template '{{ .Version }}')
 if [ "${helm_version}" == "<no value>" ]; then
   # Assume this means v2
