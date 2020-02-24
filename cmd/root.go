@@ -54,21 +54,6 @@ var rootCmd = &cobra.Command{
 		}
 
 		nextType := version.NewNextType(bump)
-		if printComputedVersion {
-			value, err := getter.Get()
-			if err != nil {
-				return err
-			}
-
-			ver, err := version.NextVersion(value, nextType)
-			if err != nil {
-				return err
-			}
-
-			_, err = os.Stdout.WriteString(ver.String())
-			return err
-		}
-
 		chart, err := helm.New(dir, &tagPath)
 		if err != nil {
 			return err
@@ -76,6 +61,11 @@ var rootCmd = &cobra.Command{
 
 		version, err := getter.NextVersion(nextType)
 		if err != nil {
+			return err
+		}
+
+		if printComputedVersion {
+			_, err = os.Stdout.WriteString(version.String())
 			return err
 		}
 
