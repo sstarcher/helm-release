@@ -54,11 +54,6 @@ var rootCmd = &cobra.Command{
 		}
 
 		nextType := version.NewNextType(bump)
-		chart, err := helm.New(dir, &tagPath)
-		if err != nil {
-			return err
-		}
-
 		version, err := getter.NextVersion(nextType)
 		if err != nil {
 			return err
@@ -70,6 +65,10 @@ var rootCmd = &cobra.Command{
 		}
 
 		log.Infof("updating the Chart.yaml to version %s", version.String())
+		chart, err := helm.New(dir, &tagPath)
+		if err != nil {
+			return err
+		}
 		if tag != "" {
 			err = chart.UpdateImageVersion(tag)
 			if err != nil {
