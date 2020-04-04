@@ -75,10 +75,8 @@ var rootCmd = &cobra.Command{
 				return err
 			}
 		} else {
-			ver, _ := getter.Get()
-			if ver.Metadata() == "" {
-				tag = ver.String()
-			}
+			ver, _ := version.SetMetadata("")
+			tag = ver.String()
 		}
 		chart.UpdateChart(version, tag)
 
