@@ -74,7 +74,7 @@ func (g *Git) isTagged() bool {
 		return b
 	}
 
-	_, err := g.run("describe", "--exact-match")
+	_, err := g.run("describe", "--exact-match", "--tags")
 	return err == nil
 }
 
