@@ -13,12 +13,15 @@ import (
 	"github.com/sstarcher/helm-release/version"
 )
 
-var cfgFile string
-var tag string
-var tagPath string
-var printComputedVersion bool
-var bump string
-var source string
+var (
+	cfgFile              string
+	tag                  string
+	tagPath              string
+	printComputedVersion bool
+	bump                 string
+	source               string
+	strict               bool
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -55,7 +58,11 @@ var rootCmd = &cobra.Command{
 
 		nextType := version.NewNextType(bump)
 		version, err := getter.NextVersion(nextType)
-		if err != nil {
+		if version == nil {
+			return err
+		}
+
+		if err != nil && strict {
 			return err
 		}
 
@@ -108,6 +115,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&printComputedVersion, "print-computed-version", false, "Print the computed version string to stdout")
 	rootCmd.Flags().StringVar(&bump, "bump", "", "Specifies to bump major, minor, or patch when using print-computed-version")
 	rootCmd.Flags().StringVar(&source, "source", "git", "Specifies the source of the version information options (git, helm)")
+	rootCmd.Flags().BoolVar(&strict, "strict", false, "When enabled it will look through all tags for semver tags and fail if tags exist outside of master")
 }
 
 // initConfig reads in config file and ENV variables if set.
