@@ -7,4 +7,4 @@
 	branch = master
 [submodule "tests/tags_bad"]
 	path = tests/tags_bad
-	url = git@github.com:sstarcher/helm-release-tags_bad.git
+	url = https://github.com/sstarcher/helm-release-tags_bad.git
