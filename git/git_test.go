@@ -9,6 +9,7 @@ import (
 
 var dir = "../tests/tags"
 var noTagsDir = "../tests/notags"
+var badTags = "../tests/tags_bad"
 
 func TestValidGitRepo(t *testing.T) {
 	assert := assert.New(t)
@@ -102,4 +103,15 @@ func TestNoTags(t *testing.T) {
 	tag, err := git.tag()
 	assert.NotNil(err)
 	assert.Empty(tag)
+}
+
+func TestBadTags(t *testing.T) {
+	assert := assert.New(t)
+
+	git := Git{
+		directory: badTags,
+	}
+
+	_, err := git.NextVersion(nil)
+	assert.NotNil(err)
 }

@@ -5,3 +5,6 @@
 	path = tests/notags
 	url = https://github.com/sstarcher/helm-release-notags.git
 	branch = master
+[submodule "tests/tags_bad"]
+	path = tests/tags_bad
+	url = git@github.com:sstarcher/helm-release-tags_bad.git
