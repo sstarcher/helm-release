@@ -230,10 +230,58 @@ func (g *Git) NextVersion(nextType *version.NextType) (*semver.Version, error) {
 		return nil, err
 	}
 
-	if nextType == nil { // Determine from git history
-		return g.versionFromHistory(ver)
+	tags, err := g.tags()
+	if err != nil {
+		return nil, err
 	}
-	return version.NextVersion(ver, nextType)
+
+	var nextVersion *semver.Version
+	if nextType == nil { // Determine from git history
+		nextVersion, err = g.versionFromHistory(ver)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		nextVersion, err = version.NextVersion(ver, nextType)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	wrongTags := false
+	for _, item := range tags {
+		if nextVersion.Compare(item) != 1 {
+			wrongTags = true
+			log.Warnf("next version is behind one of the semver tags %v", item)
+		}
+	}
+
+	if wrongTags {
+		err = fmt.Errorf("tags in history are out of sync with next version %d.%d.%d", nextVersion.Major(), nextVersion.Minor(), nextVersion.Patch())
+	}
+
+	return nextVersion, err
+}
+
+func (g *Git) tags() ([]*semver.Version, error) {
+	cmd := exec.Command("git", "tag")
+	cmd.Dir = g.directory
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+
+	s := strings.TrimSpace(string(out))
+	tagString := strings.Split(s, "\n")
+	tags := []*semver.Version{}
+	for _, item := range tagString {
+		ver, err := semver.NewVersion(item)
+		if err == nil {
+			tags = append(tags, ver)
+		}
+	}
+
+	return tags, nil
 }
 
 func validate(dir string) error {
