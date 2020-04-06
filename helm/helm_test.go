@@ -90,7 +90,7 @@ func TestVersions(t *testing.T) {
 		assert.Nil(err)
 
 		actual, err := git.NextVersion(nil)
-		assert.Nil(err)
+		assert.NotNil(actual)
 		if actual != nil {
 			assert.Equal(tt.expected, actual.String())
 		} else {
