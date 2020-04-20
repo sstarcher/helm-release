@@ -90,6 +90,11 @@ getDownloadURL() {
   elif type "wget" > /dev/null; then
     DOWNLOAD_URL=$(wget -q -O - $latest_url | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
   fi
+
+  if [ -z "$DOWNLOAD_URL" ]; then
+    VERSION="$(grep "version:" "$HELM_PLUGIN_DIR/plugin.yaml"  | cut -d '"' -f 2)"
+    DOWNLOAD_URL="https://github.com/sstarcher/helm-release/releases/download/${VERSION}/helm-release_${VERSION}_${OS}_amd64.tar.gz"
+  fi
 }
 
 # downloadFile downloads the latest binary package and also the checksum
