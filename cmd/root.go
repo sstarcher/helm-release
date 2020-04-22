@@ -16,6 +16,7 @@ import (
 var (
 	cfgFile              string
 	tag                  string
+	skipTag              bool
 	tagPath              string
 	printComputedVersion bool
 	bump                 string
@@ -76,12 +77,8 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if tag != "" {
-			err = chart.UpdateImageVersion(tag)
-			if err != nil {
-				return err
-			}
-		} else {
+
+		if !skipTag && tag == "" {
 			ver, _ := version.SetMetadata("")
 			tag = ver.String()
 		}
@@ -111,6 +108,7 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().StringVarP(&tag, "tag", "t", "", "Sets the docker image tag in values.yaml")
+	rootCmd.Flags().BoolVarP(&skipTag, "skip-application-version", "s", false, "Skips setting image.tag and Chart.yaml appVersion")
 	rootCmd.Flags().StringVar(&tagPath, "path", helm.DefaultTagPath, "Sets the path to the image tag to modify in values.yaml")
 	rootCmd.Flags().BoolVar(&printComputedVersion, "print-computed-version", false, "Print the computed version string to stdout")
 	rootCmd.Flags().StringVar(&bump, "bump", "", "Specifies to bump major, minor, or patch when using print-computed-version")

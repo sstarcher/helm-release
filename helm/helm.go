@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/Masterminds/semver"
 	"github.com/sstarcher/helm-release/version"
 	"gopkg.in/yaml.v2"
@@ -21,7 +23,6 @@ var DefaultTagPath = "image.tag"
 type ChartInterface interface {
 	version.Getter
 	version.Setter
-	UpdateImageVersion(string) error
 	UpdateChart(*semver.Version, string) error
 }
 
@@ -85,6 +86,11 @@ func (c *Chart) UpdateChart(version *semver.Version, imageVersion string) error 
 		if _, ok := config["appVersion"]; ok {
 			config["appVersion"] = imageVersion
 		}
+
+		err = c.updateImageVersion(imageVersion)
+		if err != nil {
+			log.Warnf("%v", err)
+		}
 	}
 
 	out, err := yaml.Marshal(&config)
@@ -99,8 +105,8 @@ func (c *Chart) UpdateChart(version *semver.Version, imageVersion string) error 
 	return nil
 }
 
-// UpdateImageVersion replaces the image tag in the values.yaml
-func (c *Chart) UpdateImageVersion(imageVersion string) error {
+// updateImageVersion replaces the image tag in the values.yaml
+func (c *Chart) updateImageVersion(imageVersion string) error {
 	var values interface{}
 	valuesData, err := ioutil.ReadFile(c.path + "/values.yaml")
 	if err != nil {
