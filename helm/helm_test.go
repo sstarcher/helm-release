@@ -32,29 +32,6 @@ func TestUpdateChart(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestUpdateImage(t *testing.T) {
-	assert := assert.New(t)
-
-	chart, err := New(noTags, nil)
-	assert.Nil(err)
-	assert.NotNil(chart)
-
-	err = chart.UpdateImageVersion("1.1.1")
-	assert.Nil(err)
-}
-
-func TestUpdateImageInvalidPath(t *testing.T) {
-	assert := assert.New(t)
-
-	tag := "invalid"
-	chart, err := New(noTags, &tag)
-	assert.Nil(err)
-	assert.NotNil(chart)
-
-	err = chart.UpdateImageVersion("1.1.1")
-	assert.NotNil(err)
-}
-
 var versionTests = []struct {
 	branch   string
 	tag      string
