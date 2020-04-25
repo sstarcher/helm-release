@@ -13,7 +13,7 @@ if [ "${helm_version}" == "<no value>" ]; then
 fi
 
 if [ "${helm_version:0:2}" == "v2" ]; then
-  : "${HELM_PLUGIN_PATH:="$(helm home)/plugins/helm-release"}"
+  : "${HELM_PLUGIN_PATH:="$($HELM_BIN  home)/plugins/helm-release"}"
 
   # Convert the HELM_PLUGIN_PATH to unix if cygpath is
   # available. This is the case when using MSYS2 or Cygwin
@@ -23,7 +23,7 @@ if [ "${helm_version:0:2}" == "v2" ]; then
     HELM_PLUGIN_PATH=$(cygpath -u "${HELM_PLUGIN_PATH}")
   fi
 elif [ "${helm_version:0:2}" == "v3" ]; then
-  eval "$(helm env)"
+  eval "$($HELM_BIN  env)"
 
   HELM_PLUGIN_PATH="${HELM_PLUGINS}"
 else
