@@ -64,6 +64,7 @@ Jenkins uses the environment variable BRANCH_NAME with the value of the PR examp
 * Grab the tar file for your system from the [releases](https://github.com/sstarcher/helm-release/releases)
 ```
   $ eval $(helm env) # Get helm environment variable for plugin location $HELM_PLUGINS
+  $ mkdir /Users/sstarcher/Library/helm/plugins/helm-release
   $ tar -xvf DOWNLOADED_TAR_GZ -C /Users/sstarcher/Library/helm/plugins/helm-release
 ```
 
