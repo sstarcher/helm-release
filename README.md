@@ -59,6 +59,14 @@ The master branch is treated differently from the default and will be `NEXT_TAG-
 
 Jenkins uses the environment variable BRANCH_NAME with the value of the PR example `PR-97`.  This will result in a release version of `NEXT_TAG-0.pr-97-COMMITS+SHA`
 
+## Install without internet
+
+* Grab the tar file for your system from the [releases](https://github.com/sstarcher/helm-release/releases)
+```
+  $ eval $(helm env) # Get helm environment variable for plugin location $HELM_PLUGINS
+  $ tar -xvf DOWNLOADED_TAR_GZ -C /Users/sstarcher/Library/helm/plugins/helm-release
+```
+
 ## Uninstall
 
     $ helm plugin remove release
