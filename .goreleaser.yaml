@@ -6,7 +6,8 @@ builds:
       - linux
     goarch:
       - amd64
-archive:
+archives:
+- id: tar
   format: tar.gz
   files:
     - README.md
